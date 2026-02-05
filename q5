@@ -1,0 +1,42 @@
+Q5: Memory Compaction (Remove FFH from 40H-5FH)
+; In-place, Indirect addressing only.
+
+ORG 0000H
+
+    ; --- Step 1: Filter and Shift ---
+    MOV R0, #40H    ; Read Pointer
+    MOV R1, #40H    ; Write Pointer
+    MOV R2, #32     ; Loop Counter (40H to 5FH = 32 bytes)
+
+SCAN_LOOP:
+    MOV A, @R0      ; Read value
+    CJNE A, #0FFH, KEEP_DATA ; If value is NOT FFH, keep it
+    
+    ; If value IS FFH, do nothing (skip incrementing write pointer)
+    SJMP NEXT_ITER
+
+KEEP_DATA:
+    MOV @R1, A      ; Write value to current write position
+    INC R1          ; Increment Write Pointer
+
+NEXT_ITER:
+    INC R0          ; Always increment Read Pointer
+    DJNZ R2, SCAN_LOOP
+
+    ; --- Step 2: Fill remaining with 00H ---
+    ; R1 is now at the first "empty" slot after compaction.
+    ; We need to fill from R1 to 5FH with 00H.
+
+FILL_ZERO_LOOP:
+    MOV A, R1
+    CJNE A, #60H, CONTINUE_FILL ; Check if R1 reached 60H (end of 5FH)
+    SJMP STOP_PROG
+
+CONTINUE_FILL:
+    MOV @R1, #00H   ; Write 00H
+    INC R1          ; Next slot
+    SJMP FILL_ZERO_LOOP
+
+STOP_PROG:
+    SJMP STOP_PROG
+    END question 5
