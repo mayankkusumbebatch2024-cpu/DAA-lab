@@ -1,0 +1,43 @@
+Q2: Compare values at 50H and 51H without SUBB/CJNE
+; Output in 52H: 01H (50H > 51H), 00H (Equal), FFH (50H < 51H)
+
+ORG 0000H
+
+    MOV R0, 50H     ; Load first number
+    MOV R1, 51H     ; Load second number
+
+COMPARE_LOOP:
+    ; Check if R0 is 0
+    MOV A, R0
+    JZ CHECK_R1_ZERO ; If R0 is 0, check state of R1
+
+    ; Check if R1 is 0
+    MOV A, R1
+    JZ R1_IS_ZERO    ; If R1 is 0 (and R0 wasn't), then R0 > R1
+
+    ; Decrement both
+    DEC R0
+    DEC R1
+    SJMP COMPARE_LOOP
+
+CHECK_R1_ZERO:
+    MOV A, R1
+    JZ BOTH_EQUAL    ; R0 is 0 AND R1 is 0 -> Equal
+    SJMP R0_LESS     ; R0 is 0 BUT R1 is not -> R0 < R1
+
+R1_IS_ZERO:
+    ; R1 reached 0 before R0 -> R0 > R1
+    MOV 52H, #01H    ; Store 01H
+    SJMP STOP
+
+R0_LESS:
+    ; R0 reached 0 before R1 -> R0 < R1
+    MOV 52H, #0FFH   ; Store FFH
+    SJMP STOP
+
+BOTH_EQUAL:
+    MOV 52H, #00H    ; Store 00H
+
+STOP:
+    SJMP STOP
+    END
